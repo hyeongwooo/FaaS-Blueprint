@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: {{ .User }}-sensor
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+    - name: event-a
+      eventSourceName: event-source-a
+      eventName: {{ .EventLogic.EventA }}
+    - name: event-b
+      eventSourceName: event-source-b
+      eventName: {{ .EventLogic.EventB }}
+  triggers:
+    - template:
+        name: trigger-workflow
+        conditions: {{ .EventLogic.Condition }} # 이 부분을 사용자 정의 가능하도록 함
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: custom-workflow-
+              spec:
+                entrypoint: {{ .Workflow.Entrypoint }} # CR에서 사용자 정의 가능
+                workflowTemplateRef:
+                  name: {{ .Workflow.WorkflowTemplate }} # CR에서 사용자 정의 가능
+
